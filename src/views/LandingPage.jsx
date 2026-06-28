@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useDatabase } from '../context/DatabaseContext';
-import { Globe, Plane, Award, Shield, CheckCircle2, ChevronDown, MessageSquare, Phone, Mail, MapPin } from 'lucide-react';
+import { 
+  Globe, Plane, Award, Shield, CheckCircle2, ChevronDown, 
+  MessageSquare, Phone, Mail, MapPin, Search, Ticket, 
+  Calendar, Clock, Sparkles, AlertCircle, FileText
+} from 'lucide-react';
 
-export const LandingPage = ({ setView }) => {
-  const { currentUser, submitEnquiry, logout } = useDatabase();
+export const LandingPage = ({ setView, setSelectedDestination }) => {
+  const { currentUser, submitEnquiry, logout, setPrefilledVisa } = useDatabase();
   const [enquiry, setEnquiry] = useState({ name: '', email: '', phone: '', message: '' });
   const [activeFaq, setActiveFaq] = useState(null);
+  
+  // Navigation tab state
+  const [activeNavTab, setActiveNavTab] = useState('explore'); // 'explore' or 'events'
+  
+  // Search and Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [deliveryFilter, setDeliveryFilter] = useState('any');
+  const [typeFilter, setTypeFilter] = useState('any');
+  const [docFilter, setDocFilter] = useState('any');
+  const [dateFilter, setDateFilter] = useState('any');
 
   const handleEnquirySubmit = (e) => {
     e.preventDefault();
@@ -14,6 +28,156 @@ export const LandingPage = ({ setView }) => {
     setEnquiry({ name: '', email: '', phone: '', message: '' });
   };
 
+  // Mock Countries Data (Explore Tab)
+  const countries = [
+    {
+      name: "Thailand", flag: "🇹🇭",
+      image: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&w=1200&q=80",
+      type: "Tourist Visa", delivery: "instant", validity: "90 Days", fees: "₹400",
+      documents: "basic",
+      description: "Fast e-visa for beach getaways, temple trails and cultural exploration.",
+      processingTime: "Instant (E-Visa)",
+      entryType: "Multiple Entry",
+      requirements: ["Passport (6+ months validity)", "Passport-size Photograph", "Bank Statement (last 3 months)", "Return Flight Ticket", "Hotel Booking Confirmation"],
+      highlights: ["Beaches of Phuket", "Chiang Mai Temples", "Bangkok Street Food", "Maya Bay Snorkeling"],
+      note: "Thailand E-Visa can be applied 15 days to 3 months before planned travel. Ensure your passport has at least 2 blank pages."
+    },
+    {
+      name: "United Arab Emirates", flag: "🇦🇪",
+      image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80",
+      type: "Tourist Visa", delivery: "standard", validity: "60 Days", fees: "₹7,899",
+      documents: "basic",
+      description: "Quick entry clearance for modern leisure, luxury shopping and business.",
+      processingTime: "2–3 Business Days",
+      entryType: "Single Entry",
+      requirements: ["Passport (6+ months validity)", "Passport-size Photograph", "Last 3 months Bank Statement", "Salary Slips (3 months)", "Hotel Booking Confirmation", "Return Flight Ticket"],
+      highlights: ["Burj Khalifa", "Dubai Mall & Souks", "Desert Safari", "Palm Jumeirah"],
+      note: "UAE tourist visa is extendable by 30 days from within the country. Business visitors may need a sponsor letter."
+    },
+    {
+      name: "Sri Lanka", flag: "🇱🇰",
+      image: "https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80",
+      type: "Tourist Visa", delivery: "instant", validity: "180 Days", fees: "₹300",
+      documents: "basic",
+      description: "Pocket-friendly tourist entry for ancient ruins, lush hills and pristine beaches.",
+      processingTime: "Instant (E-Visa)",
+      entryType: "Double Entry",
+      requirements: ["Passport (6+ months validity)", "Passport-size Photograph", "Bank Statement", "Return Ticket", "Travel Itinerary"],
+      highlights: ["Sigiriya Rock Fortress", "Ella Green Hills", "Galle Fort", "Nuwara Eliya Tea Estates"],
+      note: "Sri Lanka ETA is an online process with near-instant approval. Always print your ETA approval before travel."
+    },
+    {
+      name: "Malaysia", flag: "🇲🇾",
+      image: "https://images.unsplash.com/photo-1596422846543-75c6fc18a593?auto=format&fit=crop&w=1200&q=80",
+      type: "Tourist Visa", delivery: "instant", validity: "30 Days", fees: "₹300",
+      documents: "basic",
+      description: "Digital e-visa processing for quick shopping trips, island getaways and food tours.",
+      processingTime: "Instant (E-Visa)",
+      entryType: "Single Entry",
+      requirements: ["Passport (6+ months validity)", "Passport-size Photograph", "Return Ticket", "Hotel Booking Confirmation"],
+      highlights: ["Petronas Twin Towers", "Batu Caves", "Langkawi Island", "Penang Heritage Trail"],
+      note: "Indian passport holders can visit Malaysia visa-free for up to 30 days under special arrangements. Verify eligibility before travel."
+    },
+    {
+      name: "Germany", flag: "🇩🇪",
+      image: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1200&q=80",
+      type: "Student Visa", delivery: "express", validity: "180 Days", fees: "₹7,200",
+      documents: "high",
+      description: "Academic vetting and complete document kit assistance for top German universities.",
+      processingTime: "4–6 Weeks",
+      entryType: "Multiple Entry (Schengen)",
+      requirements: ["Passport (valid throughout stay)", "University Admission Letter", "Blocked Account (€11,208 min)", "APS Certificate", "Travel Health Insurance", "Academic Transcripts", "Passport-size Photographs", "Language Proficiency Certificate"],
+      highlights: ["TU Munich & Heidelberg", "Berlin Culture Scene", "Research Institutes", "Oktoberfest & Festivals"],
+      note: "German student visa requires an in-person appointment at the German consulate. Book your slot at least 3 months in advance."
+    },
+    {
+      name: "Japan", flag: "🇯🇵",
+      image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80",
+      type: "Business Visa", delivery: "standard", validity: "90 Days", fees: "₹500",
+      documents: "basic",
+      description: "Visa processing for corporate meetings, trade shows and tech conferences.",
+      processingTime: "5–7 Business Days",
+      entryType: "Multiple Entry",
+      requirements: ["Passport (valid for stay duration)", "Passport-size Photograph", "Invitation Letter from Japanese Company", "Business Registration Certificate", "Bank Statement (last 6 months)", "Return Ticket & Itinerary"],
+      highlights: ["Tokyo Tech Hub", "Kyoto Temples", "Mount Fuji", "Osaka Business District"],
+      note: "Japan business visa requires a formal invitation from a registered Japanese company. Our team assists in drafting compliant invitation formats."
+    },
+    {
+      name: "Switzerland", flag: "🇨🇭",
+      image: "https://images.unsplash.com/photo-1502784444187-359ac186c5bb?auto=format&fit=crop&w=1200&q=80",
+      type: "Tourist Visa", delivery: "express", validity: "90 Days", fees: "₹7,600",
+      documents: "high",
+      description: "Schengen compliance support for winter skiing, glacier tours and luxury getaways.",
+      processingTime: "5–10 Business Days",
+      entryType: "Multiple Entry (Schengen)",
+      requirements: ["Passport (3 months beyond stay)", "Passport-size Photograph", "Last 6 months Bank Statement", "Travel Insurance (€30,000 min cover)", "Hotel Bookings (entire stay)", "Return Flight Tickets", "ITR or Salary Slips"],
+      highlights: ["Jungfraujoch Top of Europe", "Lucerne Old Town", "Swiss Alps Skiing", "Interlaken Adventure Sports"],
+      note: "Switzerland Schengen visa unlocks travel across all 26 Schengen countries. Mandatory travel insurance must be purchased before applying."
+    },
+    {
+      name: "Singapore", flag: "🇸🇬",
+      image: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1200&q=80",
+      type: "Business Visa", delivery: "standard", validity: "30 Days", fees: "₹2,500",
+      documents: "basic",
+      description: "Business and short-term corporate authorizations for South-East Asia's premier hub.",
+      processingTime: "3–5 Business Days",
+      entryType: "Single Entry",
+      requirements: ["Passport (6+ months validity)", "Passport-size Photograph", "Company Invitation Letter", "Business Registration Documents", "Bank Statement (last 3 months)", "Return Ticket"],
+      highlights: ["Marina Bay Sands", "Sentosa Island", "Gardens by the Bay", "Orchard Road & Bugis"],
+      note: "Singapore processes visa applications through the ICA online portal. Our executives handle the complete submission on your behalf."
+    }
+  ];
+
+
+  // Filter country list
+  const filteredCountries = useMemo(() => {
+    return countries.filter(country => {
+      const matchesSearch = country.name.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesDelivery = deliveryFilter === 'any' || country.delivery === deliveryFilter;
+      const matchesType = typeFilter === 'any' || country.type === typeFilter;
+      const matchesDocs = docFilter === 'any' || country.documents === docFilter;
+      
+      return matchesSearch && matchesDelivery && matchesType && matchesDocs;
+    });
+  }, [searchQuery, deliveryFilter, typeFilter, docFilter]);
+
+  // Mock Holiday Packages (Events Tab)
+  const holidayPackages = [
+    {
+      title: "German Oktoberfest & Munich Tour",
+      image: "https://images.unsplash.com/photo-1560930961-b1d5e3ec3a99?auto=format&fit=crop&w=600&q=80",
+      price: "₹85,000",
+      duration: "7 Days / 6 Nights",
+      rating: "4.9",
+      visaStatus: "Visa support included"
+    },
+    {
+      title: "Dubai Luxury Winter Festival",
+      image: "https://images.unsplash.com/photo-1582948636195-5f657f2022d4?auto=format&fit=crop&w=600&q=80",
+      price: "₹65,000",
+      duration: "5 Days / 4 Nights",
+      rating: "4.8",
+      visaStatus: "Visa on arrival support"
+    },
+    {
+      title: "Swiss Alps Skiing & Glacier Tour",
+      image: "https://images.unsplash.com/photo-1482862549707-f63cb32c5fd9?auto=format&fit=crop&w=600&q=80",
+      price: "₹1,20,000",
+      duration: "8 Days / 7 Nights",
+      rating: "4.95",
+      visaStatus: "Schengen Visa assistance"
+    },
+    {
+      title: "Japan Cherry Blossom & Kyoto Festival",
+      image: "https://images.unsplash.com/photo-1522441815192-d9f04eb0615c?auto=format&fit=crop&w=600&q=80",
+      price: "₹1,40,000",
+      duration: "9 Days / 8 Nights",
+      rating: "4.92",
+      visaStatus: "E-Visa processing included"
+    }
+  ];
+
   const faqs = [
     { q: "What is the typical processing time for a tourist visa?", a: "Processing times vary by destination. Typically, tourist visas take between 5 to 15 business days. Express options are available for select countries." },
     { q: "What documents are mandatory for a student visa?", a: "Generally, you will need a valid passport, official university admission offer letter, proof of financial sufficiency (like a blocked account or bank statement), passport photos, and academic transcripts." },
@@ -21,30 +185,91 @@ export const LandingPage = ({ setView }) => {
     { q: "Is travel insurance mandatory for visa approvals?", a: "For many regions (like the Schengen Area), valid travel health insurance is mandatory. We offer holiday packages that include compliant travel insurance." }
   ];
 
-  const services = [
-    { title: "Tourist Visa", desc: "Leisure travel clearances for over 150+ countries with minimal documentation.", icon: Globe },
-    { title: "Student Visa", desc: "Expert guidance for university admissions and long-term academic visas.", icon: Award },
-    { title: "Work Visa", desc: "Corporate sponsorship processing and professional employment visas.", icon: Shield },
-    { title: "Business Visa", desc: "Fast-track clearances for corporate meetings, conferences, and trade fairs.", icon: Plane },
-    { title: "Holiday Packages", desc: "Customized international itineraries with hotels, flights, and sightseeing.", icon: Globe },
-    { title: "Flight Booking", desc: "Affordable international and domestic flight deals with instant confirmations.", icon: Plane }
-  ];
+  const handleApplyClick = (countryName, visaType) => {
+    // Set prefilled data
+    setPrefilledVisa({
+      country: countryName,
+      type: visaType
+    });
+    
+    // Redirect
+    if (currentUser) {
+      if (currentUser.role === 'Admin') setView('admin-dashboard');
+      else if (currentUser.role === 'CRM Executive') setView('crm-dashboard');
+      else setView('customer-dashboard');
+    } else {
+      setView('login');
+    }
+  };
+
+  // Navigate to full destination detail page instead of directly applying
+  const handleCardClick = (country) => {
+    if (setSelectedDestination) setSelectedDestination(country);
+    setView('destination-detail');
+  };
+
 
   return (
     <div style={{ paddingTop: '70px', minHeight: '100vh', background: '#f8fafc' }}>
       
-      {/* Sticky Navbar */}
-      <nav className="navbar">
-        <a href="#" className="logo" onClick={() => setView('landing')}>
-          <Plane size={28} style={{ transform: 'rotate(45deg)' }} />
-          <span>VeloceTravel</span>
+      {/* Sticky Navbar (Atlys-styled) */}
+      <nav className="navbar" style={{ padding: '0 5%' }}>
+        <a href="#" className="logo" onClick={() => setView('landing')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Plane size={24} style={{ transform: 'rotate(45deg)', color: 'var(--primary-color)' }} />
+          <span style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-dark)' }}>VeloceTravel</span>
         </a>
-        <ul className="nav-links">
-          <li><a href="#services">Services</a></li>
-          <li><a href="#why-choose-us">Why Us</a></li>
-          <li><a href="#faqs">FAQs</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
+        
+        {/* Atlys Verification Badge */}
+        <div className="navbar-badge" style={{ cursor: 'default' }}>
+          <span className="navbar-badge-icon">✓</span>
+          <span>Visas On Time Guaranteed</span>
+        </div>
+
+        {/* Explore vs Events Toggle tabs */}
+        <div className="navbar-tabs">
+          <button 
+            className={`navbar-tab-btn ${activeNavTab === 'explore' ? 'active' : ''}`}
+            onClick={() => setActiveNavTab('explore')}
+          >
+            <Globe size={16} />
+            Explore
+          </button>
+          <button 
+            className={`navbar-tab-btn ${activeNavTab === 'events' ? 'active' : ''}`}
+            onClick={() => setActiveNavTab('events')}
+          >
+            <Ticket size={16} />
+            Events
+          </button>
+        </div>
+
+        {/* VISA CTA Button */}
+        <button
+          className="navbar-visa-btn"
+          onClick={() => {
+            setActiveNavTab('explore');
+            setTimeout(() => {
+              document.getElementById('visa-explorer')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }}
+          title="Apply for your visa online"
+        >
+          <Shield size={15} />
+          Get Visa
+        </button>
+
+        {/* Search input in Navbar */}
+        <div className="navbar-search-container">
+          <Search size={16} className="navbar-search-icon" />
+          <input 
+            type="text" 
+            className="navbar-search-input" 
+            placeholder="Search Country" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
         <div className="nav-auth">
           {currentUser ? (
             <>
@@ -55,134 +280,276 @@ export const LandingPage = ({ setView }) => {
                   else if (currentUser.role === 'CRM Executive') setView('crm-dashboard');
                   else setView('customer-dashboard');
                 }}
+                style={{ borderRadius: '9999px', fontSize: '0.85rem' }}
               >
-                Go to Dashboard ({currentUser.role})
+                Go to Dashboard
               </button>
-              <button className="btn btn-danger" onClick={logout}>Logout</button>
+              <button 
+                className="btn btn-danger" 
+                onClick={logout} 
+                style={{ borderRadius: '9999px', fontSize: '0.85rem' }}
+              >
+                Logout
+              </button>
             </>
           ) : (
             <>
-              <button className="btn btn-outline" onClick={() => setView('login')}>Login</button>
-              <button className="btn btn-primary" onClick={() => setView('register')}>Register</button>
+              <button className="btn btn-outline" onClick={() => setView('login')} style={{ borderRadius: '9999px', fontSize: '0.85rem' }}>Login</button>
+              <button className="btn btn-primary" onClick={() => setView('register')} style={{ borderRadius: '9999px', fontSize: '0.85rem' }}>Register</button>
             </>
           )}
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <header className="hero">
-        <div className="hero-content">
-          <h1>Your Trusted Visa & Travel Partner</h1>
-          <p>
-            Experience seamless international visa processing and bespoke holiday planning. 
-            Our expert team takes the complexity out of travel documentations.
-          </p>
-          <div className="hero-ctas">
-            <button 
-              className="btn btn-primary" 
-              onClick={() => {
-                if (currentUser) {
-                  if (currentUser.role === 'Admin') setView('admin-dashboard');
-                  else if (currentUser.role === 'CRM Executive') setView('crm-dashboard');
-                  else setView('customer-dashboard');
-                } else {
-                  setView('login');
-                }
-              }}
-            >
-              Apply Visa Now
-            </button>
-            <a href="#contact" className="btn btn-outline">Contact Us</a>
-          </div>
-        </div>
-      </header>
+      {/* RENDER EXPLORE TAB */}
+      {activeNavTab === 'explore' && (
+        <>
+          {/* Hero Section */}
+          <header className="hero" style={{ background: 'radial-gradient(circle at 75% 30%, rgba(224, 242, 254, 0.4) 0%, rgba(248, 250, 252, 0.95) 60%), url("https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1600&q=80") no-repeat center center/cover' }}>
+            <div className="hero-content">
+              <h1>Your Trusted Visa & Travel Partner</h1>
+              <p>
+                Apply for tourist, student, and business visas in minutes. Explore global destinations with zero paperwork hassle.
+              </p>
+              <div className="hero-ctas">
+                <a href="#visa-explorer" className="btn btn-primary" style={{ borderRadius: '9999px' }}>
+                  Explore Visas
+                </a>
+                <a href="#contact" className="btn btn-outline" style={{ borderRadius: '9999px' }}>
+                  Contact Us
+                </a>
+              </div>
+            </div>
+          </header>
 
-      {/* Services Section */}
-      <section id="services" style={{ padding: '80px 8%', background: 'white' }}>
-        <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-          <h2 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>Our Services</h2>
-          <p style={{ color: 'var(--text-medium)', maxWidth: '600px', margin: '0 auto' }}>
-            We provide comprehensive travel solutions from global visa consultancies to custom tours.
-          </p>
-        </div>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
-          {services.map((service, index) => {
-            const IconComp = service.icon;
-            return (
-              <div key={index} className="glass-card glass-card-hover" style={{ padding: '30px', textAlign: 'left' }}>
-                <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)', marginBottom: '20px' }}>
-                  <IconComp size={24} />
+          {/* Visa Explorer Section */}
+          <section id="visa-explorer" style={{ padding: '0 8% 80px 8%', background: 'white' }}>
+            
+            {/* Filter bar (Atlys Style) */}
+            <div className="visa-explorer-filter-bar">
+              {/* Delivery Filter */}
+              <div className="filter-item">
+                <div className="filter-icon-wrapper green">
+                  <Clock size={16} />
                 </div>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '10px' }}>{service.title}</h3>
-                <p style={{ color: 'var(--text-medium)', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '20px' }}>{service.desc}</p>
-                <button 
-                  style={{ background: 'transparent', border: 'none', color: 'var(--primary-color)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
-                  onClick={() => {
-                    if (currentUser) {
-                      setView(currentUser.role === 'Admin' ? 'admin-dashboard' : currentUser.role === 'CRM Executive' ? 'crm-dashboard' : 'customer-dashboard');
-                    } else {
-                      setView('login');
-                    }
-                  }}
-                >
-                  Learn More & Apply →
-                </button>
+                <div className="filter-details">
+                  <span className="filter-label">Visa delivery</span>
+                  <select className="filter-select" value={deliveryFilter} onChange={(e) => setDeliveryFilter(e.target.value)}>
+                    <option value="any">Any Time</option>
+                    <option value="instant">Instant Visa</option>
+                    <option value="standard">Standard Processing</option>
+                    <option value="express">Express Vetting</option>
+                  </select>
+                </div>
               </div>
-            );
-          })}
-        </div>
-      </section>
 
-      {/* Why Choose Us Section */}
-      <section id="why-choose-us" style={{ padding: '80px 8%', background: '#f8fafc' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '40px', alignItems: 'center' }}>
-          <div>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '20px', lineHeight: '1.2' }}>Why Global Travelers Choose Us</h2>
-            <p style={{ color: 'var(--text-medium)', marginBottom: '30px', lineHeight: '1.6' }}>
-              We combine cutting-edge technology with seasoned immigration expertise. 
-              Our real-time document verification speeds up approvals and eliminates processing errors.
+              {/* Visa Type Filter */}
+              <div className="filter-item">
+                <div className="filter-icon-wrapper blue">
+                  <Globe size={16} />
+                </div>
+                <div className="filter-details">
+                  <span className="filter-label">Type</span>
+                  <select className="filter-select" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+                    <option value="any">All Visa Types</option>
+                    <option value="Tourist Visa">Tourist Visa</option>
+                    <option value="Student Visa">Student Visa</option>
+                    <option value="Business Visa">Business Visa</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Documents Filter */}
+              <div className="filter-item">
+                <div className="filter-icon-wrapper orange">
+                  <Award size={16} />
+                </div>
+                <div className="filter-details">
+                  <span className="filter-label">Documents</span>
+                  <select className="filter-select" value={docFilter} onChange={(e) => setDocFilter(e.target.value)}>
+                    <option value="any">Any Documents</option>
+                    <option value="basic">Basic (Passport/Photo)</option>
+                    <option value="high">High (ITR/Bank Statement)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Date/Holidays Filter */}
+              <div className="filter-item">
+                <div className="filter-icon-wrapper pink">
+                  <Calendar size={16} />
+                </div>
+                <div className="filter-details">
+                  <span className="filter-label">Holidays</span>
+                  <select className="filter-select" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
+                    <option value="any">Select Dates</option>
+                    <option value="summer">Summer Getaway</option>
+                    <option value="winter">Winter Break</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Destination Grid Title */}
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+              <h2 style={{ fontSize: '2.2rem', marginBottom: '10px' }}>Popular Destinations</h2>
+              <p style={{ color: 'var(--text-medium)' }}>
+                Apply instantly for E-Visas with verified delivery timelines.
+              </p>
+            </div>
+
+            {/* Premium Country Visa Grid */}
+            {filteredCountries.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-light)' }}>
+                <AlertCircle size={48} style={{ marginBottom: '15px' }} />
+                <h3>No destinations match your filters</h3>
+                <p style={{ marginTop: '5px' }}>Try resetting or modifying your filters above.</p>
+              </div>
+            ) : (
+              <div className="premium-destination-grid">
+                {filteredCountries.map((country, idx) => (
+                  <div 
+                    key={idx} 
+                    className="premium-destination-card"
+                    onClick={() => handleCardClick(country)}
+                  >
+                    <div 
+                      className="premium-card-bg"
+                      style={{ backgroundImage: `url(${country.image})` }}
+                    />
+                    <div className="premium-card-overlay">
+                      <div className="premium-card-header">
+                        <span className="premium-flag-badge">{country.flag}</span>
+                      </div>
+                      
+                      <div className="premium-card-body">
+                        <h3 className="premium-card-title">{country.name}</h3>
+                        <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', marginBottom: '15px', lineHeight: '1.4' }}>
+                          {country.description}
+                        </p>
+                        
+                        <div className="premium-card-meta-row">
+                          <div className="premium-meta-item">
+                            <span className="premium-meta-label">Type</span>
+                            <span className="premium-meta-value">{country.type}</span>
+                          </div>
+                          
+                          <div className="premium-meta-item" style={{ textAlign: 'center' }}>
+                            <span className="premium-meta-label">Validity</span>
+                            <span className="premium-meta-value">{country.validity}</span>
+                          </div>
+                          
+                          <div className="premium-meta-item" style={{ textAlign: 'right' }}>
+                            <span className="premium-meta-label">Fees</span>
+                            <span className="premium-meta-value" style={{ color: '#2dd4bf' }}>{country.fees}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Why Choose Us */}
+          <section id="why-choose-us" style={{ padding: '80px 8%', background: '#f8fafc' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '40px', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ fontSize: '2.5rem', marginBottom: '20px', lineHeight: '1.2' }}>Why Global Travelers Choose Us</h2>
+                <p style={{ color: 'var(--text-medium)', marginBottom: '30px', lineHeight: '1.6' }}>
+                  We combine cutting-edge technology with seasoned immigration expertise. Our real-time document verification speeds up approvals and eliminates processing errors.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <CheckCircle2 color="var(--secondary-color)" size={20} />
+                    <span style={{ fontWeight: 500 }}>99.2% Visa Application Success Rate</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <CheckCircle2 color="var(--secondary-color)" size={20} />
+                    <span style={{ fontWeight: 500 }}>Direct Liaison with Embassies & Consulates</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <CheckCircle2 color="var(--secondary-color)" size={20} />
+                    <span style={{ fontWeight: 500 }}>End-to-End Encryption for Passport Safety</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+                <div className="glass-card" style={{ padding: '24px', background: 'white' }}>
+                  <h4 style={{ color: 'var(--primary-color)', fontSize: '2rem', marginBottom: '5px' }}>15k+</h4>
+                  <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '5px' }}>Visas Approved</p>
+                  <p style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>Successfully processed for global destinations.</p>
+                </div>
+                <div className="glass-card" style={{ padding: '24px', background: 'white' }}>
+                  <h4 style={{ color: 'var(--secondary-color)', fontSize: '2rem', marginBottom: '5px' }}>10+</h4>
+                  <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '5px' }}>Years Experience</p>
+                  <p style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>Decades of navigation in compliance rules.</p>
+                </div>
+                <div className="glass-card" style={{ padding: '24px', background: 'white' }}>
+                  <h4 style={{ color: '#ec4899', fontSize: '2rem', marginBottom: '5px' }}>24/7</h4>
+                  <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '5px' }}>Direct Support</p>
+                  <p style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>Continuous assistance at every step of travel.</p>
+                </div>
+                <div className="glass-card" style={{ padding: '24px', background: 'white' }}>
+                  <h4 style={{ color: '#eab308', fontSize: '2rem', marginBottom: '5px' }}>99%</h4>
+                  <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '5px' }}>Satisfaction</p>
+                  <p style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>Stellar feedback from corporate & families.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* RENDER EVENTS TAB */}
+      {activeNavTab === 'events' && (
+        <section style={{ padding: '50px 8% 80px 8%', background: 'white', animation: 'fadeIn 0.4s ease' }}>
+          <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>Holiday & Event Tour Packages</h2>
+            <p style={{ color: 'var(--text-medium)', maxWidth: '600px', margin: '0 auto' }}>
+              Hand-picked international experiences combining travel plans, premium tours, and visa compliance services.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <CheckCircle2 color="var(--secondary-color)" size={20} />
-                <span style={{ fontWeight: 500 }}>99.2% Visa Application Success Rate</span>
-              </div>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <CheckCircle2 color="var(--secondary-color)" size={20} />
-                <span style={{ fontWeight: 500 }}>Direct Liaison with Embassies & Consulates</span>
-              </div>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <CheckCircle2 color="var(--secondary-color)" size={20} />
-                <span style={{ fontWeight: 500 }}>End-to-End Encryption for Passport Safety</span>
-              </div>
-            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-            <div className="glass-card" style={{ padding: '24px', background: 'white' }}>
-              <h4 style={{ color: 'var(--primary-color)', fontSize: '2rem', marginBottom: '5px' }}>15k+</h4>
-              <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '5px' }}>Visas Approved</p>
-              <p style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>Successfully processed for global destinations.</p>
-            </div>
-            <div className="glass-card" style={{ padding: '24px', background: 'white' }}>
-              <h4 style={{ color: 'var(--secondary-color)', fontSize: '2rem', marginBottom: '5px' }}>10+</h4>
-              <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '5px' }}>Years Experience</p>
-              <p style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>Decades of navigation in compliance rules.</p>
-            </div>
-            <div className="glass-card" style={{ padding: '24px', background: 'white' }}>
-              <h4 style={{ color: '#ec4899', fontSize: '2rem', marginBottom: '5px' }}>24/7</h4>
-              <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '5px' }}>Direct Support</p>
-              <p style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>Continuous assistance at every step of travel.</p>
-            </div>
-            <div className="glass-card" style={{ padding: '24px', background: 'white' }}>
-              <h4 style={{ color: '#eab308', fontSize: '2rem', marginBottom: '5px' }}>99%</h4>
-              <p style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '5px' }}>Satisfaction</p>
-              <p style={{ color: 'var(--text-light)', fontSize: '0.85rem' }}>Stellar feedback from corporate & families.</p>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
+            {holidayPackages.map((pkg, idx) => (
+              <div key={idx} className="event-card">
+                <div className="event-image" style={{ backgroundImage: `url(${pkg.image})` }}>
+                  <span className="event-price-tag">{pkg.price}</span>
+                </div>
+                <div style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--secondary-color)', fontWeight: 700, textTransform: 'uppercase' }}>
+                      🌟 {pkg.duration}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>⭐ {pkg.rating}</span>
+                  </div>
+                  
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: '12px', fontWeight: 700 }}>{pkg.title}</h3>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#eff6ff', padding: '10px', borderRadius: '8px', color: 'var(--primary-color)', fontSize: '0.85rem', marginBottom: '20px' }}>
+                    <Sparkles size={16} />
+                    <strong>{pkg.visaStatus}</strong>
+                  </div>
+
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ width: '100%', borderRadius: '9999px' }}
+                    onClick={() => {
+                      setPrefilledVisa({ country: pkg.title.split(' ')[0], type: "Tourist Visa" });
+                      setView(currentUser ? 'customer-dashboard' : 'login');
+                    }}
+                  >
+                    Book Tour Package
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Customer Reviews Section */}
       <section style={{ padding: '80px 8%', background: 'white' }}>
@@ -251,7 +618,7 @@ export const LandingPage = ({ setView }) => {
 
         <div style={{ maxWidth: '700px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
           {faqs.map((faq, index) => (
-            <div key={index} className="glass-card" style={{ overflow: 'hidden' }}>
+            <div key={index} className="glass-card" style={{ overflow: 'hidden', background: 'white' }}>
               <button 
                 style={{ width: '100%', padding: '20px 24px', background: 'transparent', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left' }}
                 onClick={() => setActiveFaq(activeFaq === index ? null : index)}
@@ -361,7 +728,7 @@ export const LandingPage = ({ setView }) => {
                   style={{ resize: 'vertical' }}
                 />
               </div>
-              <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', borderRadius: '9999px' }}>
                 <MessageSquare size={16} />
                 Submit Enquiry
               </button>
@@ -376,7 +743,7 @@ export const LandingPage = ({ setView }) => {
           <div>
             <a href="#" className="logo" style={{ color: 'white', marginBottom: '15px' }}>
               <Plane size={24} style={{ transform: 'rotate(45deg)', color: 'var(--secondary-color)' }} />
-              <span>VeloceTravel</span>
+              <span style={{ color: 'white' }}>VeloceTravel</span>
             </a>
             <p style={{ fontSize: '0.85rem', lineHeight: '1.6' }}>
               Your trusted partner for effortless global visas, corporate compliance, and bespoke vacation tours. 
@@ -411,7 +778,7 @@ export const LandingPage = ({ setView }) => {
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', fontSize: '0.8rem' }}>
-          <p>© 2026 VeloceTravel Inc. All rights reserved.</p>
+          <p>© 2026 VeloceTravel Inc. (atlys prototype). All rights reserved.</p>
           <div style={{ display: 'flex', gap: '15px' }}>
             <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Facebook</a>
             <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Twitter</a>

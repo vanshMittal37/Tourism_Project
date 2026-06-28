@@ -252,6 +252,7 @@ export const DatabaseProvider = ({ children }) => {
   const [tasks, setTasks] = useState(() => getInitialData('visa_tasks', []));
   const [notifications, setNotifications] = useState([]);
   const [toasts, setToasts] = useState([]);
+  const [prefilledVisa, setPrefilledVisa] = useState(null);
 
   // Sync back to local storage
   useEffect(() => {
@@ -643,7 +644,9 @@ export const DatabaseProvider = ({ children }) => {
       updateTaskStatus,
       switchDemoRole,
       addToast,
-      markNotificationsRead
+      markNotificationsRead,
+      prefilledVisa,
+      setPrefilledVisa
     }}>
       {children}
     </DatabaseContext.Provider>

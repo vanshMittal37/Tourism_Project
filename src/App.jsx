@@ -5,12 +5,14 @@ import AuthPages from './views/AuthPages';
 import CustomerDashboard from './views/CustomerDashboard';
 import CrmDashboard from './views/CrmDashboard';
 import AdminDashboard from './views/AdminDashboard';
+import DestinationDetail from './views/DestinationDetail';
 import RoleSwitcher from './components/RoleSwitcher';
 import Toast from './components/Toast';
 
 const AppContent = () => {
   const { currentUser } = useDatabase();
   const [view, setView] = useState('landing');
+  const [selectedDestination, setSelectedDestination] = useState(null);
 
   // Sync route view with auth state changes (e.g. login redirection or role switches)
   useEffect(() => {
@@ -29,7 +31,9 @@ const AppContent = () => {
   const renderView = () => {
     switch (view) {
       case 'landing':
-        return <LandingPage setView={setView} />;
+        return <LandingPage setView={setView} setSelectedDestination={setSelectedDestination} />;
+      case 'destination-detail':
+        return <DestinationDetail destination={selectedDestination} setView={setView} />;
       case 'login':
         return <AuthPages initialTab="login" setView={setView} />;
       case 'register':
@@ -41,7 +45,7 @@ const AppContent = () => {
       case 'admin-dashboard':
         return <AdminDashboard setView={setView} />;
       default:
-        return <LandingPage setView={setView} />;
+        return <LandingPage setView={setView} setSelectedDestination={setSelectedDestination} />;
     }
   };
 

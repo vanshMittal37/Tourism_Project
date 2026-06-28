@@ -8,7 +8,8 @@ import {
 export const CustomerDashboard = ({ setView }) => {
   const { 
     currentUser, logout, updateProfile, applyVisa, 
-    applications, uploadDocument, deleteDocument, notifications, markNotificationsRead
+    applications, uploadDocument, deleteDocument, notifications, markNotificationsRead,
+    prefilledVisa, setPrefilledVisa
   } = useDatabase();
 
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -35,6 +36,20 @@ export const CustomerDashboard = ({ setView }) => {
     zip: currentUser?.address?.zip || ''
   });
 
+  // Settings State
+  const [notifPrefs, setNotifPrefs] = useState({ emailUpdates: true, smsAlerts: true, pushNotifs: false, marketingEmails: false });
+  const [pwdForm, setPwdForm] = useState({ current: '', next: '', confirm: '' });
+  const [pwdMessage, setPwdMessage] = useState('');
+
+  const handlePasswordChange = (e) => {
+    e.preventDefault();
+    if (!pwdForm.current) { setPwdMessage('Please enter your current password.'); return; }
+    if (pwdForm.next.length < 8) { setPwdMessage('New password must be at least 8 characters.'); return; }
+    if (pwdForm.next !== pwdForm.confirm) { setPwdMessage('Passwords do not match.'); return; }
+    setPwdMessage('Password updated successfully! (Demo mode)');
+    setPwdForm({ current: '', next: '', confirm: '' });
+  };
+
   // Doc Upload States
   const [selectedAppId, setSelectedAppId] = useState('');
   const [docType, setDocType] = useState('Passport');
@@ -48,6 +63,20 @@ export const CustomerDashboard = ({ setView }) => {
       setSelectedAppId(myApps[0].id);
     }
   }, [myApps, selectedAppId]);
+
+  // Prefill check on redirect from card
+  React.useEffect(() => {
+    if (prefilledVisa) {
+      setNewApp({
+        applicantName: currentUser?.name || '',
+        passportNumber: currentUser?.passportDetails?.passportNumber || '',
+        visaType: prefilledVisa.type || 'Tourist Visa',
+        destinationCountry: prefilledVisa.country || ''
+      });
+      setShowApplyModal(true);
+      setPrefilledVisa(null); // clear it
+    }
+  }, [prefilledVisa, currentUser, setPrefilledVisa]);
 
   // Statistics
   const activeCount = myApps.filter(app => ['Pending', 'Documents Pending', 'In Review'].includes(app.status)).length;
@@ -173,6 +202,15 @@ export const CustomerDashboard = ({ setView }) => {
                   {notifications.filter(n => n.userId === currentUser.id && !n.read).length}
                 </span>
               )}
+            </a>
+          </li>
+          <li>
+            <a 
+              className={`sidebar-link ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }}
+            >
+              <Settings size={18} />
+              Settings
             </a>
           </li>
         </ul>
@@ -649,6 +687,140 @@ export const CustomerDashboard = ({ setView }) => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* 6. SETTINGS TAB */}
+        {activeTab === 'settings' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+            {/* Notification Preferences */}
+            <div className="glass-card" style={{ padding: '32px', background: 'white' }}>
+              <h3 style={{ marginBottom: '6px' }}>Notification Preferences</h3>
+              <p style={{ color: 'var(--text-medium)', fontSize: '0.9rem', marginBottom: '28px' }}>Choose how you receive alerts and updates from VeloceTravel.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                {[
+                  { key: 'emailUpdates', label: 'Email Updates', desc: 'Receive status changes and approvals via email' },
+                  { key: 'smsAlerts', label: 'SMS Alerts', desc: 'Get real-time SMS notifications on your mobile' },
+                  { key: 'pushNotifs', label: 'Browser Push Notifications', desc: 'Instant push notifications in your browser' },
+                  { key: 'marketingEmails', label: 'Promotional Emails', desc: 'Visa deals, travel packages and offers from us' }
+                ].map(({ key, label, desc }) => (
+                  <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '10px', background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                    <div>
+                      <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>{label}</p>
+                      <p style={{ color: 'var(--text-medium)', fontSize: '0.82rem', marginTop: '2px' }}>{desc}</p>
+                    </div>
+                    <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '26px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={notifPrefs[key]}
+                        onChange={() => setNotifPrefs(prev => ({ ...prev, [key]: !prev[key] }))}
+                        style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }}
+                      />
+                      <span style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                        background: notifPrefs[key] ? 'var(--secondary-color)' : '#cbd5e1',
+                        borderRadius: '13px',
+                        transition: 'background 0.2s'
+                      }} />
+                      <span style={{
+                        position: 'absolute', top: '3px',
+                        left: notifPrefs[key] ? '25px' : '3px',
+                        width: '20px', height: '20px',
+                        background: 'white',
+                        borderRadius: '50%',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                        transition: 'left 0.2s'
+                      }} />
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <button className="btn btn-secondary" style={{ marginTop: '20px' }}
+                onClick={() => alert('Notification preferences saved! (Demo mode)')}
+              >
+                Save Preferences
+              </button>
+            </div>
+
+            {/* Change Password */}
+            <div className="glass-card" style={{ padding: '32px', background: 'white' }}>
+              <h3 style={{ marginBottom: '6px' }}>Change Password</h3>
+              <p style={{ color: 'var(--text-medium)', fontSize: '0.9rem', marginBottom: '28px' }}>Keep your account secure with a strong, unique password.</p>
+              {pwdMessage && (
+                <div style={{ padding: '12px 16px', marginBottom: '20px', borderRadius: '8px',
+                  background: pwdMessage.includes('success') ? '#d1fae5' : '#fee2e2',
+                  color: pwdMessage.includes('success') ? '#059669' : '#dc2626',
+                  fontSize: '0.9rem', fontWeight: 500 }}>
+                  {pwdMessage}
+                </div>
+              )}
+              <form onSubmit={handlePasswordChange}>
+                <div className="form-grid" style={{ marginBottom: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Current Password</label>
+                    <input type="password" className="form-input" placeholder="••••••••"
+                      value={pwdForm.current} onChange={e => setPwdForm({ ...pwdForm, current: e.target.value })} />
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label className="form-label">New Password</label>
+                    <input type="password" className="form-input" placeholder="Min. 8 characters"
+                      value={pwdForm.next} onChange={e => setPwdForm({ ...pwdForm, next: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Confirm New Password</label>
+                    <input type="password" className="form-input" placeholder="Repeat new password"
+                      value={pwdForm.confirm} onChange={e => setPwdForm({ ...pwdForm, confirm: e.target.value })} />
+                  </div>
+                </div>
+                <button type="submit" className="btn btn-primary">Update Password</button>
+              </form>
+            </div>
+
+            {/* Account Security */}
+            <div className="glass-card" style={{ padding: '32px', background: 'white' }}>
+              <h3 style={{ marginBottom: '6px' }}>Account Security</h3>
+              <p style={{ color: 'var(--text-medium)', fontSize: '0.9rem', marginBottom: '28px' }}>Manage sessions and security settings for your account.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '10px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <CheckCircle size={20} style={{ color: 'var(--color-approved)' }} />
+                    <div>
+                      <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>Email Verified</p>
+                      <p style={{ color: 'var(--text-medium)', fontSize: '0.82rem' }}>{currentUser?.email}</p>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-approved)', fontWeight: 600 }}>Active</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '10px', background: '#fefce8', border: '1px solid #fde68a' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <Clock size={20} style={{ color: 'var(--color-pending)' }} />
+                    <div>
+                      <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>Two-Factor Authentication (2FA)</p>
+                      <p style={{ color: 'var(--text-medium)', fontSize: '0.82rem' }}>Protect your account with an extra security layer</p>
+                    </div>
+                  </div>
+                  <button className="btn btn-outline" style={{ fontSize: '0.82rem', padding: '6px 14px' }}
+                    onClick={() => alert('2FA setup coming soon! (Demo mode)')}
+                  >Enable</button>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '10px', background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <AlertCircle size={20} style={{ color: 'var(--text-medium)' }} />
+                    <div>
+                      <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>Active Sessions</p>
+                      <p style={{ color: 'var(--text-medium)', fontSize: '0.82rem' }}>1 active session (current browser)</p>
+                    </div>
+                  </div>
+                  <button className="btn btn-danger" style={{ fontSize: '0.82rem', padding: '6px 14px' }}
+                    onClick={() => { logout(); setView('landing'); }}
+                  >Sign Out All</button>
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
 

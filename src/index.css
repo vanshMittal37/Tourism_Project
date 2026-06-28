@@ -745,3 +745,402 @@ h1, h2, h3, h4, h5, h6 {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ==========================================
+   ATLYS-STYLE PREMIUM UI STYLES
+   ========================================== */
+
+/* Navbar Badge */
+.navbar-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  border: 1px solid #e2e8f0;
+}
+
+.navbar-badge-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: var(--secondary-color);
+  color: white;
+  border-radius: 50%;
+}
+
+/* Navbar Explore/Events Tabs */
+.navbar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #f8fafc;
+  padding: 4px;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+}
+
+.navbar-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-medium);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.navbar-tab-btn:hover {
+  color: var(--primary-color);
+}
+
+.navbar-tab-btn.active {
+  background: white;
+  color: var(--text-dark);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Navbar Visa CTA Button */
+.navbar-visa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--secondary-color), #14b8a6);
+  color: white;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+.navbar-visa-btn:hover {
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.45);
+}
+.navbar-visa-btn:active {
+  transform: translateY(0);
+}
+
+/* Navbar Search Input */
+.navbar-search-container {
+  position: relative;
+  width: 220px;
+}
+
+.navbar-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  pointer-events: none;
+}
+
+.navbar-search-input {
+  width: 100%;
+  padding: 8px 12px 8px 38px;
+  border-radius: 9999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.85rem;
+  color: var(--text-dark);
+  transition: all var(--transition-fast);
+}
+
+.navbar-search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+  width: 260px; /* Slight expand on focus */
+}
+
+/* Explorer Filter Bar */
+.visa-explorer-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 12px 24px;
+  border-radius: 9999px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  max-width: 900px;
+  margin: -40px auto 50px auto;
+  z-index: 10;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .visa-explorer-filter-bar {
+    border-radius: var(--border-radius);
+    margin: 20px 0;
+    padding: 15px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 160px;
+  padding: 0 10px;
+}
+
+.filter-item:not(:last-child) {
+  border-right: 1px solid #e2e8f0;
+}
+
+@media (max-width: 768px) {
+  .filter-item:not(:last-child) {
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+  }
+}
+
+.filter-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1f5f9;
+}
+
+.filter-icon-wrapper.green { background: #dcfce7; color: #15803d; }
+.filter-icon-wrapper.blue { background: #dbeafe; color: #1d4ed8; }
+.filter-icon-wrapper.orange { background: #ffedd5; color: #c2410c; }
+.filter-icon-wrapper.pink { background: #fce7f3; color: #be185d; }
+
+.filter-details {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.filter-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-light);
+  margin-bottom: 2px;
+}
+
+.filter-select {
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  cursor: pointer;
+  outline: none;
+  padding-right: 15px;
+  width: 100%;
+}
+
+/* Premium Country Cards */
+.premium-destination-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 25px;
+  margin-bottom: 50px;
+}
+
+.premium-destination-card {
+  position: relative;
+  height: 380px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.premium-destination-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.12);
+}
+
+.premium-card-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.5s ease;
+}
+
+.premium-destination-card:hover .premium-card-bg {
+  transform: scale(1.05);
+}
+
+.premium-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 40%, rgba(0, 0, 0, 0.8) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px;
+  color: white;
+}
+
+.premium-card-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.premium-flag-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 1.2rem;
+}
+
+.premium-card-body {
+  margin-top: auto;
+}
+
+.premium-card-title {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 12px;
+  color: white;
+  text-transform: uppercase;
+}
+
+.premium-card-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 12px;
+}
+
+.premium-meta-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.premium-meta-label {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.premium-meta-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: white;
+}
+
+/* Event Cards Style */
+.event-card {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  background: white;
+  box-shadow: var(--glass-shadow);
+  transition: all var(--transition-fast);
+  border: 1px solid var(--glass-border);
+}
+
+.event-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.event-image {
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.event-price-tag {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  background: var(--primary-color);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* ══════════════════════════════════════════
+   DESTINATION DETAIL PAGE — RESPONSIVE
+══════════════════════════════════════════ */
+
+/* Collapse 2-col layout on tablets & below */
+@media (max-width: 1024px) {
+  /* Main content grid */
+  div[style*="grid-template-columns: minmax(0,1fr) 360px"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Unstick the sidebar card on mobile */
+  div[style*="position: sticky"][style*="top: 30px"] {
+    position: static !important;
+  }
+}
+
+/* Stats bar wraps cleanly on narrow screens */
+@media (max-width: 768px) {
+  /* Hero height shorter on mobile */
+  .destination-hero {
+    height: 360px !important;
+  }
+  /* Cards in highlights grid stack to 2 cols */
+  div[style*="minmax(200px, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  div[style*="minmax(200px, 1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+  div[style*="minmax(280px, 1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
